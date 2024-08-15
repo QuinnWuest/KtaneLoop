@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
+  m_Name: ModConfig
+  m_EditorClassIdentifier: 
+  id: Loop
+  title: Loop
+  author: Quinn Wuest
+  description: "You make a loop-de-loop and pull, and your bombs are looking cool!\n\nMade
+    by Quinn Wuest\n\n[url=https://ktane.timwi.de/HTML/Loop.html]Manual HTML[/url]\r\n[url=https://ktane.timwi.de/PDF/Loop.pdf]Manual
+    PDF[/url]"
+  version: 1.0
+  outputFolder: build
+  previewImage: {fileID: 2800000, guid: 40bef4a8b637f9049a9a6ff476ac323a, type: 3}
