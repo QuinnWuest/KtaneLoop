@@ -25,12 +25,13 @@ public class LoopScript : MonoBehaviour
     private const string primary = "_MainTex";
     private const string secondary = "_SecondTex";
 
+    private const int _size = 4;
     private bool _canInteract = false;
-    private int[] _arrowSolutions = new int[9];
-    private int[] _currentArrowDirections = new int[9];
+    private int[] _arrowSolutions = new int[_size * _size];
+    private int[] _currentArrowDirections = new int[_size * _size];
     private string[] _dirNames = new string[] { "U", "UR", "R", "DR", "D", "DL", "L", "UL" };
     private int? _currentlySelectedArrow;
-    private bool[] _isLit = new bool[9];
+    private bool[] _isLit = new bool[_size * _size];
     private int[] _solutionPositionsForSolveAnim;
     private bool _valid;
 
@@ -64,10 +65,10 @@ public class LoopScript : MonoBehaviour
         Module.OnActivate += Activate;
 
         TryAgain:
-        var arrows = new int[9];
+        var arrows = new int[_size * _size];
         var visited = new List<int>();
-        int ix = Rnd.Range(0, 9);
-        for (int i = 0; i < 9; i++)
+        int ix = Rnd.Range(0, _size * _size);
+        for (int i = 0; i < _size * _size; i++)
         {
             visited.Add(ix);
             var dir = GetValidDirs(ix).PickRandom();
@@ -75,7 +76,7 @@ public class LoopScript : MonoBehaviour
             var newPos = GetNewPos(ix, dir);
             if (visited.Contains(newPos))
             {
-                if (i == 8 && newPos == visited[0])
+                if (i == (_size * _size) - 1 && newPos == visited[0])
                     continue;
                 goto TryAgain;
             }
@@ -95,13 +96,13 @@ public class LoopScript : MonoBehaviour
         int ix = 0;
         for (int i = 0; i < path.Length; i++)
         {
-            if (ix < 0 || ix > 8)
+            if (ix < 0 || ix > (_size * _size) - 1)
                 return false;
             visited.Add(ix);
             var newPos = GetNewPos(ix, path[ix]);
             if (visited.Contains(newPos))
             {
-                if (i == 8 && newPos == visited[0])
+                if (i == (_size * _size) - 1 && newPos == visited[0])
                 {
                     _solutionPositionsForSolveAnim = visited.ToArray();
                     return true;
@@ -193,7 +194,7 @@ public class LoopScript : MonoBehaviour
 
     private IEnumerator StartAnimation()
     {
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < (_size * _size); i++)
         {
             StartCoroutine(FadeArrowIn(i));
             yield return new WaitForSeconds(0.15f);
@@ -240,26 +241,26 @@ public class LoopScript : MonoBehaviour
         ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetFloat("_Blend", 1);
         ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.DarkBlue]);
         ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int)ArrowColor.Green]);
-        if (i == 8)
+        if (i == _size - 1)
             _canInteract = true;
     }
 
     private List<int> GetValidDirs(int pos)
     {
-        int r = pos / 3;
-        int c = pos % 3;
+        int r = pos / _size;
+        int c = pos % _size;
         var list = new List<int>();
         if (r != 0)
             list.Add(0);
-        if (r != 0 && c != 2)
+        if (r != 0 && c != _size - 1)
             list.Add(1);
-        if (c != 2)
+        if (c != _size - 1)
             list.Add(2);
-        if (r != 2 && c != 2)
+        if (r != _size - 1 && c != _size - 1)
             list.Add(3);
-        if (r != 2)
+        if (r != _size - 1)
             list.Add(4);
-        if (r != 2 && c != 0)
+        if (r != _size - 1 && c != 0)
             list.Add(5);
         if (c != 0)
             list.Add(6);
@@ -271,30 +272,30 @@ public class LoopScript : MonoBehaviour
     private int GetNewPos(int pos, int dir)
     {
         if (dir == 0)
-            return pos - 3;
+            return pos - _size;
         if (dir == 1)
-            return pos - 2;
+            return pos - _size + 1;
         if (dir == 2)
             return pos + 1;
         if (dir == 3)
-            return pos + 4;
+            return pos + _size + 1;
         if (dir == 4)
-            return pos + 3;
+            return pos + _size;
         if (dir == 5)
-            return pos + 2;
+            return pos + _size - 1;
         if (dir == 6)
             return pos - 1;
         if (dir == 7)
-            return pos - 4;
+            return pos - _size + 1;
         throw new InvalidOperationException("idunno");
     }
 
     private IEnumerator SolveAnimation(int st)
     {
         int ix = Array.IndexOf(_solutionPositionsForSolveAnim, st);
-        for (int i = ix; i < (ix + 9); i++)
+        for (int i = ix; i < (ix + _size * _size); i++)
         {
-            StartCoroutine(SolveArrowTransition(_solutionPositionsForSolveAnim[i % 9]));
+            StartCoroutine(SolveArrowTransition(_solutionPositionsForSolveAnim[i % (_size * _size)]));
             yield return new WaitForSeconds(0.3f);
         }
         yield return new WaitForSeconds(0.25f);
@@ -372,11 +373,11 @@ public class LoopScript : MonoBehaviour
     {
         while (!_canInteract)
             yield return null;
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < (_size * _size); i++)
         {
             if (_currentArrowDirections[i] != _arrowSolutions[i])
             {
-                for (int j = i; j < 9; j++)
+                for (int j = i; j < (_size * _size); j++)
                     if (_currentArrowDirections[j] == _arrowSolutions[i])
                     {
                         ArrowSels[i].OnInteract();
