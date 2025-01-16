@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using Rnd = UnityEngine.Random;
+using Loop;
 
 public class LoopScript : MonoBehaviour
 {
@@ -64,30 +66,112 @@ public class LoopScript : MonoBehaviour
         }
         Module.OnActivate += Activate;
 
-        TryAgain:
-        var arrows = new int[_size * _size];
-        var visited = new List<int>();
-        int ix = Rnd.Range(0, _size * _size);
-        for (int i = 0; i < _size * _size; i++)
-        {
-            visited.Add(ix);
-            var dir = GetValidDirs(ix).PickRandom();
-            arrows[i] = dir;
-            var newPos = GetNewPos(ix, dir);
-            if (visited.Contains(newPos))
-            {
-                if (i == (_size * _size) - 1 && newPos == visited[0])
-                    continue;
-                goto TryAgain;
-            }
-            ix = newPos;
-        }
+        
         for (int i = 0; i < _arrowSolutions.Length; i++)
             _arrowSolutions[i] = arrows[visited.IndexOf(i)];
         Debug.LogFormat("[Loop #{0}] Solution: {1}", _moduleId, _arrowSolutions.Select(i => _dirNames[i]).Join(", "));
         _currentArrowDirections = _arrowSolutions.ToArray();
         while (IsValidPath(_currentArrowDirections))
             _currentArrowDirections.Shuffle();
+    }
+
+    private IEnumerable<int> CreateLoop()
+    {
+        var connections = Enumerable.Range(0, 1 << 8).Where(i => Ut.CountBits(i) == 2).ToList();
+        const int w = 4;
+        const int h = 4;
+
+        for (var seed = 0; seed < 1000; seed++)
+        {
+            var rnd = new Random(seed);
+
+            IEnumerable<int[]> recurse(int?[] grid, bool[][] takens)
+            {
+                var ixs = new List<int>();
+                for (var cell = 0; cell < grid.Length; cell++)
+                {
+                    if (grid[cell] != null)
+                        continue;
+                    var c = takens[cell].Count(b => !b);
+                    if (c == 1)
+                    {
+                        ixs.Clear();
+                        ixs.Add(cell);
+                        goto shortcut;
+                    }
+                    if (c == 0)
+                        yield break;
+                    ixs.Add(cell);
+                }
+
+                if (ixs.Count == 0)
+                {
+                    yield return grid.Select(v => v.Value).ToArray();
+                    yield break;
+                }
+
+                shortcut:
+                var ix = ixs.PickRandom(rnd);
+                var valOfs = rnd.Next(0, connections.Count);
+                for (var iVal = 0; iVal < takens[ix].Length; iVal++)
+                {
+                    var val = (iVal + valOfs) % connections.Count;
+                    if (!takens[ix][val])
+                    {
+                        grid[ix] = connections[val];
+
+                        var newTakens = takens.Select(ar => ar.ToArray()).ToArray();
+
+                        // Make sure that this placement doesn’t cause a premature loop
+                        var visited = 0;
+                        var curCell = ix;
+                        var prevDir = 0;
+                        do
+                        {
+                            var otherDir = Enumerable.Range(0, 8).First(dir => dir != prevDir && (grid[curCell] & (1 << dir)) != 0);
+                            curCell = new Coord(w, h, curCell).Neighbor((GridDirection)otherDir).Index;
+                            prevDir = (otherDir + 4) % 8;
+                            visited++;
+                        }
+                        while (curCell != ix && grid[curCell] != null);
+                        if (curCell == ix && visited < w * h)  // This would create a premature loop
+                            goto busted;
+
+                        // Make sure that the neighboring cells connect to this one
+                        var cell = new Coord(w, h, ix);
+                        for (GridDirection dir = 0; dir < (GridDirection)8; dir++)
+                            if (cell.CanGoTo(dir))
+                            {
+                                var otherIx = cell.Neighbor(dir).Index;
+                                for (var otherVal = 0; otherVal < newTakens[otherIx].Length; otherVal++)
+                                    if (((connections[otherVal] & (1 << (((int)dir + 4) % 8))) != 0) != ((grid[ix] & (1 << (int)dir)) != 0))
+                                        newTakens[otherIx][otherVal] = true;
+                            }
+
+                        foreach (var solution in recurse(grid, newTakens))
+                            yield return solution;
+
+                        busted:
+                        grid[ix] = null;
+                    }
+                }
+            }
+
+            foreach (var solution in recurse(new int?[w * h], NewArray(w * h, ix => NewArray(connections.Count, c => !Enumerable.Range(0, 8).All(dir => (connections[c] & (1 << dir)) == 0 || new Coord(w, h, ix).CanGoTo((GridDirection)dir))))).Take(1))
+            {
+
+                Console.WriteLine(solution.Join(", "));
+                Debugger.Break();
+            }
+        }
+    }
+
+    public static T[] NewArray<T>(int size, Func<int, T> initialiser)
+    {
+        T[] array = new T[size];
+        for (int i = 0; i < size; i++)
+            array[i] = initialiser(i);
+        return array;
     }
 
     private bool IsValidPath(int[] path)
