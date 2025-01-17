@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Loop;
 using UnityEngine;
 using Rnd = UnityEngine.Random;
@@ -332,52 +333,6 @@ public class LoopScript : MonoBehaviour
         if (i == _size - 1)
             _canInteract = true;
     }
-
-    private List<int> GetValidDirs(int pos)
-    {
-        int r = pos / _size;
-        int c = pos % _size;
-        var list = new List<int>();
-        if (r != 0)
-            list.Add(0);
-        if (r != 0 && c != _size - 1)
-            list.Add(1);
-        if (c != _size - 1)
-            list.Add(2);
-        if (r != _size - 1 && c != _size - 1)
-            list.Add(3);
-        if (r != _size - 1)
-            list.Add(4);
-        if (r != _size - 1 && c != 0)
-            list.Add(5);
-        if (c != 0)
-            list.Add(6);
-        if (r != 0 && c != 0)
-            list.Add(7);
-        return list;
-    }
-
-    private int GetNewPos(int pos, int dir)
-    {
-        if (dir == 0)
-            return pos - _size;
-        if (dir == 1)
-            return pos - _size + 1;
-        if (dir == 2)
-            return pos + 1;
-        if (dir == 3)
-            return pos + _size + 1;
-        if (dir == 4)
-            return pos + _size;
-        if (dir == 5)
-            return pos + _size - 1;
-        if (dir == 6)
-            return pos - 1;
-        if (dir == 7)
-            return pos - _size + 1;
-        throw new InvalidOperationException("idunno");
-    }
-
     private IEnumerator SolveAnimation(int st)
     {
         int ix = Array.IndexOf(_solutionPositionsForSolveAnim, st);
@@ -409,51 +364,27 @@ public class LoopScript : MonoBehaviour
 #pragma warning disable 0414
     private IEnumerator ProcessTwitchCommand(string command)
     {
-        command = command.Trim().ToLowerInvariant();
-        if (!command.StartsWith("swap "))
+        command = command.Trim().ToUpperInvariant();
+        var m = Regex.Match(command, @"^\s*swap(?<coords>(\s+[ABCD][1234])+)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (!m.Success)
             yield break;
-        command = command.Substring(4);
-        var inputs = command.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToArray();
-        if (inputs.Length % 2 != 0)
+        var coords = Regex.Split(m.Groups["coords"].Value.Trim(), @"\s+");
+        if (coords.Length % 2 != 0)
         {
-            yield return "sendtochaterror An odd number of inputs has been entered. Invalid command.";
+            yield return "sendtochaterror Odd number of coords found in command. Command ignored";
             yield break;
         }
         var list = new List<int>();
-        for (int i = 0; i < inputs.Length; i++)
-        {
-            if (inputs[i] == "1" || inputs[i] == "tl" || inputs[i] == "a1")
-                list.Add(0);
-            else if (inputs[i] == "2" || inputs[i] == "tm" || inputs[i] == "b1")
-                list.Add(1);
-            else if (inputs[i] == "3" || inputs[i] == "tr" || inputs[i] == "c1")
-                list.Add(2);
-            else if (inputs[i] == "4" || inputs[i] == "ml" || inputs[i] == "a2")
-                list.Add(3);
-            else if (inputs[i] == "5" || inputs[i] == "mm" || inputs[i] == "b2")
-                list.Add(4);
-            else if (inputs[i] == "6" || inputs[i] == "mr" || inputs[i] == "c2")
-                list.Add(5);
-            else if (inputs[i] == "7" || inputs[i] == "bl" || inputs[i] == "a3")
-                list.Add(6);
-            else if (inputs[i] == "8" || inputs[i] == "bm" || inputs[i] == "b3")
-                list.Add(7);
-            else if (inputs[i] == "9" || inputs[i] == "br" || inputs[i] == "c3")
-                list.Add(8);
-            else
-            {
-                yield return "sendtochaterror \"" + inputs[i] + "\" is an invalid input.";
-                yield break;
-            }
-        }
+        for (int i = 0; i < coords.Length; i++)
+            list.Add((coords[i][1] - '1') * _size + (coords[i][0] - 'A'));
         yield return null;
         yield return "solve";
         for (int i = 0; i < list.Count; i++)
         {
-            while (!_canInteract)
-                yield return null;
             ArrowSels[list[i]].OnInteract();
             yield return new WaitForSeconds(0.1f);
+            while (!_canInteract)
+                yield return null;
         }
     }
 
