@@ -1,12 +1,16 @@
-﻿namespace Loop
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Loop
 {
     public struct Coord : IEquatable<Coord>
     {
         public int Index { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public readonly int X => Index % Width;
-        public readonly int Y => Index / Width;
+        public int X => Index % Width;
+        public int Y => Index / Width;
 
         public Coord(int width, int height, int index) { Width = width; Height = height; Index = index; }
         public Coord(int width, int height, int x, int y) : this(width, height, x + width * y) { }
@@ -17,9 +21,9 @@
         public Coord AddWrap(int dx, int dy) => new Coord(Width, Height, ((X + dx) % Width + Width) % Width, ((Y + dy) % Height + Height) % Height);
         public Coord AddWrap(Coord c) => AddWrap(c.X, c.Y);
 
-        public readonly bool Equals(Coord other) => other.Index == Index && other.Width == Width && other.Height == Height;
-        public override bool Equals(object obj) => obj is Coord other && Equals(other);
-        public override readonly int GetHashCode() => unchecked(Index * 1048583 + Width * 1031 + Height);
+        public bool Equals(Coord other) => other.Index == Index && other.Width == Width && other.Height == Height;
+        public override bool Equals(object obj) => obj is Coord && Equals((Coord) obj);
+        public override int GetHashCode() => unchecked(Index * 1048583 + Width * 1031 + Height);
 
         public static bool operator ==(Coord one, Coord two) => one.Equals(two);
         public static bool operator !=(Coord one, Coord two) => !one.Equals(two);
@@ -32,50 +36,47 @@
             (CanMoveBy(0, -1) && AddYWrap(-1) == other) ||
             (CanMoveBy(0, 1) && AddYWrap(1) == other);
 
-        public readonly bool CanGoTo(GridDirection dir, int amount = 1) => dir switch
+        public bool CanGoTo(GridDirection dir, int amount = 1)
         {
-            GridDirection.Up => Y >= amount,
-            GridDirection.UpRight => Y >= amount && X < Width - amount,
-            GridDirection.Right => X < Width - amount,
-            GridDirection.DownRight => Y < Height - amount && X < Width - amount,
-            GridDirection.Down => Y < Height - amount,
-            GridDirection.DownLeft => Y < Height - amount && X >= amount,
-            GridDirection.Left => X >= amount,
-            GridDirection.UpLeft => X >= amount && Y >= amount,
-            _ => throw new ArgumentOutOfRangeException(nameof(dir), "Invalid GridDirection enum value."),
-        };
+            switch (dir)
+            {
+                case GridDirection.Up: return Y >= amount;
+                case GridDirection.UpRight: return Y >= amount && X < Width - amount;
+                case GridDirection.Right: return X < Width - amount;
+                case GridDirection.DownRight: return Y < Height - amount && X < Width - amount;
+                case GridDirection.Down: return Y < Height - amount;
+                case GridDirection.DownLeft: return Y < Height - amount && X >= amount;
+                case GridDirection.Left: return X >= amount;
+                case GridDirection.UpLeft: return X >= amount && Y >= amount;
+                default: throw new ArgumentOutOfRangeException(nameof(dir), "Invalid GridDirection enum value.");
+            }
+        }
 
-        public readonly bool CanMoveBy(int x, int y) => (X + x) >= 0 && (X + x) < Width && (Y + y) >= 0 && (Y + y) < Height;
+        public bool CanMoveBy(int x, int y) => (X + x) >= 0 && (X + x) < Width && (Y + y) >= 0 && (Y + y) < Height;
 
-        public Coord GoTo(GridDirection dir, int amount = 1) => !CanGoTo(dir, amount) ? throw new InvalidOperationException("Taking that many steps in that direction would go off the grid.") : GoToWrap(dir, amount);
-
-        public Coord GoToWrap(GridDirection dir, int amount = 1) => dir switch
+        public Coord Neighbor(GridDirection dir)
         {
-            GridDirection.Up => AddWrap(0, -amount),
-            GridDirection.UpRight => AddWrap(amount, -amount),
-            GridDirection.Right => AddWrap(amount, 0),
-            GridDirection.DownRight => AddWrap(amount, amount),
-            GridDirection.Down => AddWrap(0, amount),
-            GridDirection.DownLeft => AddWrap(-amount, amount),
-            GridDirection.Left => AddWrap(-amount, 0),
-            GridDirection.UpLeft => AddWrap(-amount, -amount),
-            _ => throw new ArgumentOutOfRangeException(nameof(dir), "Invalid GridDirection enum value.")
-        };
+            if (!CanGoTo(dir))
+                throw new InvalidOperationException("The grid has no neighbor in that direction.");
+            else
+                return NeighborWrap(dir);
+        }
 
-        public Coord Neighbor(GridDirection dir) => !CanGoTo(dir) ? throw new InvalidOperationException("The grid has no neighbor in that direction.") : NeighborWrap(dir);
-
-        public Coord NeighborWrap(GridDirection dir) => dir switch
+        public Coord NeighborWrap(GridDirection dir)
         {
-            GridDirection.Up => AddWrap(0, -1),
-            GridDirection.UpRight => AddWrap(1, -1),
-            GridDirection.Right => AddWrap(1, 0),
-            GridDirection.DownRight => AddWrap(1, 1),
-            GridDirection.Down => AddWrap(0, 1),
-            GridDirection.DownLeft => AddWrap(-1, 1),
-            GridDirection.Left => AddWrap(-1, 0),
-            GridDirection.UpLeft => AddWrap(-1, -1),
-            _ => throw new ArgumentOutOfRangeException(nameof(dir), "Invalid GridDirection enum value.")
-        };
+            switch (dir)
+            {
+                case GridDirection.Up: return AddWrap(0, -1);
+                case GridDirection.UpRight: return AddWrap(1, -1);
+                case GridDirection.Right: return AddWrap(1, 0);
+                case GridDirection.DownRight: return AddWrap(1, 1);
+                case GridDirection.Down: return AddWrap(0, 1);
+                case GridDirection.DownLeft: return AddWrap(-1, 1);
+                case GridDirection.Left: return AddWrap(-1, 0);
+                case GridDirection.UpLeft: return AddWrap(-1, -1);
+                default: throw new ArgumentOutOfRangeException(nameof(dir), "Invalid GridDirection enum value.");
+            }
+        }
 
         public IEnumerable<Coord> Neighbors
         {

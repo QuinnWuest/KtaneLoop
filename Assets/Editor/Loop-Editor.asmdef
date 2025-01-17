@@ -1,0 +1,10 @@
+{
+  "name": "Loop-Editor",
+  "references": [
+    "Loop"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}
