@@ -56,12 +56,12 @@ public class LoopScript : MonoBehaviour
             ArrowSels[i].OnInteract += ArrowPress(i);
             ArrowSels[i].OnHighlight += ArrowHighlight(i);
             ArrowSels[i].OnHighlightEnded += ArrowHighlightEnded(i);
-            ArrowObjs[i].transform.GetChild(0).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.Black]);
-            ArrowObjs[i].transform.GetChild(0).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int) ArrowColor.Border]);
-            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.Black]);
-            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int) ArrowColor.DarkBlue]);
-            ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.Black]);
-            ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int) ArrowColor.White]);
+            ArrowObjs[i].transform.GetChild(0).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.Black]);
+            ArrowObjs[i].transform.GetChild(0).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int)ArrowColor.Border]);
+            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.Black]);
+            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int)ArrowColor.DarkBlue]);
+            ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.Black]);
+            ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int)ArrowColor.White]);
         }
         Module.OnActivate += Activate;
 
@@ -129,7 +129,7 @@ public class LoopScript : MonoBehaviour
                 do
                 {
                     var otherDir = Enumerable.Range(0, 8).First(dir => dir != prevDir && (grid[curCell] & (1 << dir)) != 0);
-                    curCell = new Coord(_size, _size, curCell).Neighbor((GridDirection) otherDir).Index;
+                    curCell = new Coord(_size, _size, curCell).Neighbor((GridDirection)otherDir).Index;
                     prevDir = (otherDir + 4) % 8;
                     visited++;
                 }
@@ -139,12 +139,12 @@ public class LoopScript : MonoBehaviour
 
                 // Make sure that the neighboring cells connect to this one
                 var cell = new Coord(_size, _size, ix);
-                for (GridDirection dir = 0; dir < (GridDirection) 8; dir++)
+                for (GridDirection dir = 0; dir < (GridDirection)8; dir++)
                     if (cell.CanGoTo(dir))
                     {
                         var otherIx = cell.Neighbor(dir).Index;
                         for (var otherVal = 0; otherVal < newTakens[otherIx].Length; otherVal++)
-                            if (((_connections[otherVal] & (1 << (((int) dir + 4) % 8))) != 0) != ((grid[ix] & (1 << (int) dir)) != 0))
+                            if (((_connections[otherVal] & (1 << (((int)dir + 4) % 8))) != 0) != ((grid[ix] & (1 << (int)dir)) != 0))
                                 newTakens[otherIx][otherVal] = true;
                     }
 
@@ -161,7 +161,7 @@ public class LoopScript : MonoBehaviour
     {
         var gridWithBitfields = LoopGenerateRecurse(
             grid: new int?[_size * _size],
-            takens: NewArray(_size * _size, ix => NewArray(_connections.Length, c => !Enumerable.Range(0, 8).All(dir => (_connections[c] & (1 << dir)) == 0 || new Coord(_size, _size, ix).CanGoTo((GridDirection) dir))))
+            takens: NewArray(_size * _size, ix => NewArray(_connections.Length, c => !Enumerable.Range(0, 8).All(dir => (_connections[c] & (1 << dir)) == 0 || new Coord(_size, _size, ix).CanGoTo((GridDirection)dir))))
         ).First();
 
         var gridWithDirections = new int[_size * _size];
@@ -172,7 +172,7 @@ public class LoopScript : MonoBehaviour
         {
             var otherDir = Enumerable.Range(0, 8).First(dir => dir != prevDir && (gridWithBitfields[curCell] & (1 << dir)) != 0);
             gridWithDirections[curCell] = otherDir;
-            curCell = new Coord(_size, _size, curCell).Neighbor((GridDirection) otherDir).Index;
+            curCell = new Coord(_size, _size, curCell).Neighbor((GridDirection)otherDir).Index;
             prevDir = (otherDir + 4) % 8;
         }
         while (curCell != 0);
@@ -195,9 +195,9 @@ public class LoopScript : MonoBehaviour
         {
             visited.Add(curCell);
             var newCell = new Coord(_size, _size, curCell);
-            if (!newCell.CanGoTo((GridDirection) path[curCell]))
+            if (!newCell.CanGoTo((GridDirection)path[curCell]))
                 return null;
-            curCell = newCell.Neighbor((GridDirection) path[curCell]).Index;
+            curCell = newCell.Neighbor((GridDirection)path[curCell]).Index;
         }
         return visited.Count == _size * _size ? visited : null;
     }
@@ -214,21 +214,21 @@ public class LoopScript : MonoBehaviour
                 Audio.PlaySoundAtTransform("Click", transform);
                 _isLit[i] = true;
                 _currentlySelectedArrow = i;
-                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.LightBlue]);
+                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.LightBlue]);
             }
             else if (_currentlySelectedArrow == i)
             {
                 Audio.PlaySoundAtTransform("Click", transform);
                 _isLit[i] = false;
                 _currentlySelectedArrow = null;
-                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.DarkBlue]);
+                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.DarkBlue]);
             }
             else
             {
                 Audio.PlaySoundAtTransform("Swap", transform);
                 _isLit[i] = true;
                 _canInteract = false;
-                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.LightBlue]);
+                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.LightBlue]);
                 int dirA = _currentArrowDirections[_currentlySelectedArrow.Value];
                 int dirB = _currentArrowDirections[i];
                 StartCoroutine(RotateArrow(_currentlySelectedArrow.Value, dirA, dirB));
@@ -253,9 +253,8 @@ public class LoopScript : MonoBehaviour
     {
         return delegate ()
         {
-            if (!_canInteract)
-                return;
-            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.Orange]);
+            if (_canInteract)
+                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.Orange]);
         };
     }
 
@@ -263,9 +262,8 @@ public class LoopScript : MonoBehaviour
     {
         return delegate ()
         {
-            if (!_canInteract)
-                return;
-            ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[_isLit[i] ? (int) ArrowColor.LightBlue : (int) ArrowColor.DarkBlue]);
+            if (_canInteract)
+                ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[_isLit[i] ? (int)ArrowColor.LightBlue : (int)ArrowColor.DarkBlue]);
         };
     }
 
@@ -307,7 +305,7 @@ public class LoopScript : MonoBehaviour
             elapsed += Time.deltaTime;
         }
         ArrowObjs[i].transform.localEulerAngles = new Vector3(0, (rotEnd + 360f) % 360f, 0);
-        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.DarkBlue]);
+        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.DarkBlue]);
         _isLit[i] = false;
         _canInteract = true;
     }
@@ -325,11 +323,12 @@ public class LoopScript : MonoBehaviour
             yield return null;
             elapsed += Time.deltaTime;
         }
+        ArrowObjs[i].transform.localEulerAngles = new Vector3(0, _currentArrowDirections[i] * 45f, 0f);
         ArrowObjs[i].transform.GetChild(0).GetComponent<MeshRenderer>().material.SetFloat("_Blend", 1);
         ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetFloat("_Blend", 0);
         ArrowObjs[i].transform.GetChild(2).GetComponent<MeshRenderer>().material.SetFloat("_Blend", 1);
-        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int) ArrowColor.DarkBlue]);
-        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int) ArrowColor.Green]);
+        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(primary, ColorTextures[(int)ArrowColor.DarkBlue]);
+        ArrowObjs[i].transform.GetChild(1).GetComponent<MeshRenderer>().material.SetTexture(secondary, ColorTextures[(int)ArrowColor.Green]);
         if (i == _size - 1)
             _canInteract = true;
     }
@@ -339,7 +338,7 @@ public class LoopScript : MonoBehaviour
         for (int i = ix; i < (ix + _size * _size); i++)
         {
             StartCoroutine(SolveArrowTransition(_solutionPositionsForSolveAnim[i % (_size * _size)]));
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.2f);
         }
         yield return new WaitForSeconds(0.25f);
         _moduleSolved = true;
@@ -360,7 +359,7 @@ public class LoopScript : MonoBehaviour
     }
 
 #pragma warning disable 0414
-    private readonly string TwitchHelpMessage = "!{0} swap a1 b2 [Swap positions A1 and B2.] | Acceptable commands include A1-C3, TL-BR, 1-9.";
+    private readonly string TwitchHelpMessage = "!{0} swap a1 b2 [Swap positions A1 and B2.] | Acceptable commands include A1-D4. | Columns go from A-D left to right. Rows go from 1-4 top to bottom.";
 #pragma warning disable 0414
     private IEnumerator ProcessTwitchCommand(string command)
     {
